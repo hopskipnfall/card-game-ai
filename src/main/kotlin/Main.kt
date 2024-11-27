@@ -1,4 +1,4 @@
-package com.hopskipnfall
+package com.hopskipnfall.cardgameai
 
 fun main() {
   println("Hello World!")

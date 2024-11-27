@@ -1,6 +1,7 @@
 plugins {
-  kotlin("jvm") version "2.0.0"
+  kotlin("jvm") version "2.0.20"
   id("com.diffplug.spotless") version "6.25.0"
+  application
 }
 
 group = "com.hopskipnfall"
@@ -8,6 +9,8 @@ group = "com.hopskipnfall"
 version = "1.0-SNAPSHOT"
 
 repositories { mavenCentral() }
+
+kotlin { jvmToolchain(17) }
 
 dependencies {
   val floggerVersion = "0.8"
@@ -41,4 +44,14 @@ spotless {
     targetExclude("build/", ".git/", ".idea/", ".mvn")
     jackson()
   }
+}
+
+application { mainClass.set("com.hopskipnfall.cardgameai.MainKt") }
+
+// "jar" task makes a single jar including all dependencies.
+tasks.jar {
+  manifest { attributes["Main-Class"] = application.mainClass }
+
+  from(configurations.runtimeClasspath.get().map { zipTree(it) })
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
