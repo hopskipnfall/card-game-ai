@@ -22,12 +22,18 @@ fun main() {
 
   val winner = dealer.playGame()
 
-  logger.atSevere().log("Winner: %s", winner)
+  logger.atSevere().log("Winner: %s (%s)", winner, winner.description())
 }
 
 typealias Card = Int
 
 class Dealer(private vararg val players: Player) {
+  init {
+    for ((index, player) in players.withIndex()) {
+      player.playerNumber = index + 1
+    }
+  }
+
   private val pointCards: MutableList<Card> =
     (-5..10).toMutableList().also {
       it.remove(0)
@@ -43,7 +49,6 @@ class Dealer(private vararg val players: Player) {
   }
 
   private fun doRound(): Player? {
-    logger.atSevere().log()
     val nextCard = pointCards.removeFirst()
     logger.atSevere().log("Round card: %d", nextCard)
 
@@ -51,10 +56,10 @@ class Dealer(private vararg val players: Player) {
       players.associateWith { PlayerCards(pointCards = it.pointCards, cards = it.cards) }
 
     val playedCards = mutableMapOf<Card, MutableSet<Player>>()
-    for ((i, player) in playersToCards.keys.withIndex()) {
+    for (player in playersToCards.keys) {
       val played: Card =
         player.playCard(cardToWin = nextCard, playersToCards.filterKeys { it != player }.values)
-      logger.atSevere().log("Player %d (%s) played card: %d", i, player, played)
+      logger.atSevere().log("%s played card: %d", player, played)
 
       playedCards.getOrPut(played) { mutableSetOf() }.add(player)
     }
@@ -65,9 +70,8 @@ class Dealer(private vararg val players: Player) {
       if (players.size > 1) {
         continue
       }
-      logger.atSevere().log("Winner is the one who played %s", card)
-
       winner = players.single()
+      logger.atSevere().log("%s wins the round\n", winner)
       winner.pointCards.add(nextCard)
       break
     }
@@ -81,9 +85,14 @@ abstract class Player {
   val cards: MutableList<Card> = (1..15).toMutableList().also { it.shuffle() }
   val pointCards = mutableListOf<Card>()
 
+  var playerNumber: Int = -1
+
   abstract fun playCard(cardToWin: Card, otherPlayersCards: Collection<PlayerCards>): Card
 
-  override fun toString() = "cards = ${cards.sorted()}, earned = ${pointCards.sorted()}"
+  override fun toString(): String = "player#$playerNumber" // + this.javaClass.simpleName
+
+  fun description() =
+    "cards = ${cards.sorted()}, earned = ${pointCards.sorted()}, score = ${pointCards.sum()}"
 }
 
 class RandomPlayer : Player() {
